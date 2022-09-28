@@ -1,6 +1,4 @@
-import statemachine.StateMachine
-import statemachine.StateTransitionEvent
-import kotlin.system.measureTimeMillis
+import statemachine.createStateMachineController
 
 /***
 상태: 준비, 시작, 실행, 종료
@@ -11,22 +9,51 @@ import kotlin.system.measureTimeMillis
  */
 
 fun main() {
+    val fsm = createStateMachineController {
 
-    StateMachine.create {
-        "wait" transition "play" transition "stop"
-    }.apply {
-        channel.register(StateTransitionEvent::class) {
-            println("${it.stateName} state")
-        }
-        measureTimeMillis {
-            for (i in 0..1000) {
+        "start" to "wait" name "players-are-enough-and-ready-to-play"
 
-                handle("play")
-                handle("stop")
-                handle("start")
-            }
-        }.apply {
-            println("${this/1000.0}sec...")
+        "wait" to "start" name "not-enough-players"
+
+        "wait" to "play" name "game-start"
+
+        "play" to "stop" name "game-ended"
+
+        "play" action {
+            println("GAME START!!")
+        } name "print-start-state"
+
+        "wait" action {
+            println("GAME READY TO START, WAIT FOR 5 SECONDS...")
+        } name "print-wait-state"
+
+        "stop" action {
+            println("GAME ENDED!!")
+        } name "print-stop-state"
+
+        "start" action {
+            println("GAME RESET.")
         }
+
     }
+
+    fsm handle "wait"
+    fsm handle "start"
+
+    fsm call "players-are-enough-and-ready-to-play"
+
+    fsm call "not-enough-players"
+
+    fsm call "players-are-enough-and-ready-to-play"
+
+
+    fsm call "game-start"
+
+    fsm call "game-ended"
+
+    fsm call "not-enough-players"
+
+
+    fsm call "game-start"
+
 }
