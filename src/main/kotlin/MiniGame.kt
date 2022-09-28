@@ -37,23 +37,21 @@ fun main() {
 
     }
 
+    //wait > start
     fsm handle "wait"
     fsm handle "start"
 
+    //wait > start
     fsm call "players-are-enough-and-ready-to-play"
-
     fsm call "not-enough-players"
 
+    //wait > play > stop
     fsm call "players-are-enough-and-ready-to-play"
-
-
     fsm call "game-start"
-
     fsm call "game-ended"
 
+    //no changes
     fsm call "not-enough-players"
-
-
     fsm call "game-start"
 
 }
