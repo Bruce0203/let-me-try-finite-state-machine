@@ -21,12 +21,15 @@ class StateMachine private constructor(
         ) = StateMachine(State(startName, event), eventChannel = eventChannel).run {
             val machineAdapter = StateMachineAdapter(this)
             init.invoke(machineAdapter)
-            machineAdapter
+
         }
     }
 
     internal fun newState(name: String, event: (() -> Event)? = null): State {
-        return State(name, event).apply { addTransition(start) }
+        return State(name, event).apply {
+            addTransition(start)
+            start.addTransition(this)
+        }
     }
 
     @Suppress("unused")
@@ -35,9 +38,21 @@ class StateMachine private constructor(
             transitionTo(currentState.targetState(targetState))
     }
 
+    @Suppress("unused")
+    internal fun handle(targetState: String) {
+        if (currentState.hasTransition(targetState))
+            transitionTo(currentState.targetState(targetState))
+    }
+
     private fun transitionTo(target: State) {
         currentState = target
         eventChannel.call(target.event.invoke())
+    }
+
+    internal fun getState(state: Enum<*>): State = getState(state.name)
+    internal fun getState(state: String): State {
+        return getStates().firstOrNull() { it.name == state }
+            .apply { assertNotNull(this, "$state state is not exist!") }!!
     }
 
     @Suppress("unused")
@@ -72,8 +87,12 @@ class State internal constructor(val name: String, event: (() -> Event)? = null)
     }
 
     internal fun addTransition(targetState: State) {
-        if (hasTransition(targetState))
+        if (hasTransition(targetState)) {
             throw AssertionError("state transition already exist!")
+        }
+        if (transitions.indexOfFirst { it.target == targetState } == 0) {
+            throw AssertionError("cannot add 'start' transition cause is always exists")
+        }
         transitions.add(Transition(this, targetState))
     }
 
@@ -81,10 +100,23 @@ class State internal constructor(val name: String, event: (() -> Event)? = null)
         return transitions.any { it.target == targetState }
     }
 
+    fun hasTransition(targetState: String): Boolean {
+        return transitions.any { it.target.name == targetState }
+    }
+
+    private fun assertTransitionIsNull(transition: Transition?): Transition {
+        assertNotNull(transition, "transition not exist!")
+        return transition
+    }
+
     internal fun targetState(targetState: State): State {
         val transition = transitions.firstOrNull { it.target == targetState }
-        assertNotNull(transition, "transition not exist!")
-        return transition.target
+        return assertTransitionIsNull(transition).target
+    }
+
+    internal fun targetState(targetState: String): State {
+        val transition = transitions.firstOrNull { it.target.name == targetState }
+        return assertTransitionIsNull(transition).target
     }
 
     fun getAllTargets(): List<State> {
