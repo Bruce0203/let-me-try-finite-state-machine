@@ -1,13 +1,12 @@
 package statemachine
 
-open class Event(var name: String)
+class Event(var name: String)
 
-open class Command(var name: String, var code: () -> Unit)
+class Command(var name: String, var code: () -> Unit)
 
-class StateMachine internal constructor(internal val start: State) {
+class StateMachine constructor(val start: State) {
 
-    @Suppress("unused")
-    internal fun getStates(): HashSet<State> {
+    fun getStates(): HashSet<State> {
         return HashSet<State>().apply { collectStates(start, this) }
     }
 
@@ -19,8 +18,7 @@ class StateMachine internal constructor(internal val start: State) {
         }
     }
 
-    @Suppress("unused")
-    internal fun getTransitions(): HashSet<Transition> {
+    fun getTransitions(): HashSet<Transition> {
         return HashSet<Transition>().apply { collectTransitions(start, this) }
     }
 
@@ -34,14 +32,12 @@ class StateMachine internal constructor(internal val start: State) {
 
 }
 
-class TransitionEvent(name: String) : Event(name)
-
 data class Transition(val source: State, val event: Event, val target: State)
 
-class State internal constructor(val name: String) {
-    internal val actions = ArrayList<Command>()
+class State constructor(val name: String) {
+    val actions = ArrayList<Command>()
 
-    internal val transitions by lazy { HashSet<Transition>() }
+    val transitions by lazy { HashSet<Transition>() }
 
     fun executeActions() {
         actions.forEach {
@@ -54,9 +50,9 @@ class State internal constructor(val name: String) {
         }
     }
 
-    internal fun addTransition(targetState: State): Transition {
+    fun addTransition(targetState: State): Transition {
         val transition = Transition(this,
-            TransitionEvent("${this.name}_to_${targetState.name}"), targetState)
+            Event("${this.name}_to_${targetState.name}"), targetState)
         transitions.add(transition)
         return transition
     }
@@ -65,7 +61,7 @@ class State internal constructor(val name: String) {
         return transitions.any { it.target == targetState }
     }
 
-    internal fun getAllTargets(): List<State> {
+    fun getAllTargets(): List<State> {
         return transitions.map { it.target }
     }
 
