@@ -60,7 +60,7 @@ class StateMachine constructor(val start: State) {
 
 data class Transition(val source: State, val event: Event, val target: State)
 
-class State constructor(val name: String) {
+class State(val name: String) {
     val actions = ArrayList<Command>()
 
     val transitions by lazy { HashSet<Transition>() }
