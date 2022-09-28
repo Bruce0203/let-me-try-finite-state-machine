@@ -19,7 +19,7 @@ class ControllerDSL(private val controller: Controller) {
 
     infix fun call(name: String): ControllerDSL {
         controller.call(transitions.firstOrNull { it.event.name == name }
-            ?: throw AssertionError("transition event $name not exists!"))
+            ?: throw AssertionError("transition $name is not exists!"))
         return this
     }
 
