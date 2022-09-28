@@ -71,14 +71,13 @@ class State(val name: String) {
                 it.code.invoke()
             } catch (e: Exception) {
                 e.printStackTrace()
-                throw AssertionError("an error occurred while execution at ${it.name} action")
+                throw AssertionError("an error occurred while execution at ${it.name}")
             }
         }
     }
 
     fun addTransition(targetState: State): Transition {
-        val transition = Transition(this,
-            Event("${this.name}_to_${targetState.name}"), targetState)
+        val transition = Transition(this, Event("${this.name} to ${targetState.name}"), targetState)
         transitions.add(transition)
         return transition
     }
