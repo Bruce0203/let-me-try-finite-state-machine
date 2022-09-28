@@ -1,4 +1,6 @@
 import statemachine.StateMachine
+import statemachine.StateTransitionEvent
+import kotlin.system.measureTimeMillis
 
 /***
 상태: 준비, 시작, 실행, 종료
@@ -9,9 +11,22 @@ import statemachine.StateMachine
  */
 
 fun main() {
-    StateMachine.newMachine {
-        newState("wait")
-        newState("play")
-        addTransition("wait", "play")
+
+    StateMachine.create {
+        "wait" transition "play" transition "stop"
+    }.apply {
+        channel.register(StateTransitionEvent::class) {
+            println("${it.stateName} state")
+        }
+        measureTimeMillis {
+            for (i in 0..1000) {
+
+                handle("play")
+                handle("stop")
+                handle("start")
+            }
+        }.apply {
+            println("${this/1000.0}sec...")
+        }
     }
 }

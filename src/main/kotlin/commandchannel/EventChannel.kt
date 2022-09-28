@@ -33,9 +33,9 @@ class EventChannel {
     }
 
     private fun getRegistry(event: Class<Event>): Registry {
-        val registry = registry.getOrElse(event) { Registry() }
-        this.registry[event] = registry
-        return registry
+        return registry.getOrElse(event) {
+            Registry().apply { registry[event] = this }
+        }
     }
 
 }

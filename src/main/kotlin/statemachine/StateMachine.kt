@@ -13,7 +13,7 @@ class StateMachine private constructor(
     companion object {
         @Suppress("unused")
         @JvmStatic
-        fun newMachine(
+        fun create(
             eventChannel: EventChannel = EventChannel(),
             startName: String = "start",
             event: (() -> Event)? = null,
@@ -21,7 +21,7 @@ class StateMachine private constructor(
         ) = StateMachine(State(startName, event), eventChannel = eventChannel).run {
             val machineAdapter = StateMachineAdapter(this)
             init.invoke(machineAdapter)
-
+            machineAdapter
         }
     }
 
@@ -46,13 +46,11 @@ class StateMachine private constructor(
 
     private fun transitionTo(target: State) {
         currentState = target
-        eventChannel.call(target.event.invoke())
+        currentState.executeActions(eventChannel)
     }
 
-    internal fun getState(state: Enum<*>): State = getState(state.name)
-    internal fun getState(state: String): State {
-        return getStates().firstOrNull() { it.name == state }
-            .apply { assertNotNull(this, "$state state is not exist!") }!!
+    internal fun getOrNewState(state: String): State {
+        return getStates().firstOrNull { it.name == state }?: newState(state)
     }
 
     @Suppress("unused")
@@ -72,18 +70,19 @@ class StateMachine private constructor(
 
 internal data class Transition(val source: State, val target: State)
 
-open class StateTransitionEvent(private val state: State) : Event {
+open class StateTransitionEvent(internal val state: State) : Event {
     @Suppress("unused")
     val stateName get() = state.name
 }
 
-class State internal constructor(val name: String, event: (() -> Event)? = null) {
+class State internal constructor(val name: String, internal var event: (() -> Event)? = null) {
 
     private val transitions by lazy { ArrayList<Transition>() }
-    internal var event: () -> Event
-    init {
-        if (event === null) this.event = { StateTransitionEvent(this) }
-        else this.event = event
+
+    fun executeActions(channel: EventChannel) {
+        channel.call(StateTransitionEvent(this))
+        channel.call(event?.invoke()?: return)
+
     }
 
     internal fun addTransition(targetState: State) {

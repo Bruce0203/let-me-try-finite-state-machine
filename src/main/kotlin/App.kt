@@ -6,10 +6,8 @@ class App {
         @JvmStatic
         @Suppress("unused")
         fun main(args: Array<String>) {
-            StateMachine.newMachine {
-                newState("wait")
-                newState("play")
-                addTransition("wait", "play")
+            StateMachine.create {
+                "wait" transition "play" transition "stop"
             }
 
         }
